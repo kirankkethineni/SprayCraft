@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:kirankkethineni.github.io)",
+      "Bash(curl -s \"https://kirankkethineni.github.io/XpressWeed/\")",
+      "Read(//tmp/**)",
+      "Bash(python -c \"import pdf2image; print\\('pdf2image ok'\\)\")",
+      "Bash(python -c \"from PIL import Image; print\\('PIL ok'\\)\")",
+      "Bash(magick --version)",
+      "Bash(pdftoppm -v)",
+      "Bash(gs --version)",
+      "Bash(cp 'C:/Users/kethi/OneDrive - UNT System/Kiran_Saraju_Shared/Papers/arXiv_2024-Dec-2412-12176_SprayCraft/Images_SprayCraft/Kiran_Kumar_K.JPG' C:/Users/kethi/PycharmProjects/SprayCraft/docs/images/author_kiran.jpg)",
+      "Bash(cp 'C:/Users/kethi/OneDrive - UNT System/Kiran_Saraju_Shared/Papers/arXiv_2024-Dec-2412-12176_SprayCraft/Images_SprayCraft/Kougianos_Elias.JPG' C:/Users/kethi/PycharmProjects/SprayCraft/docs/images/author_elias.jpg)",
+      "Bash(cp 'C:/Users/kethi/OneDrive - UNT System/Kiran_Saraju_Shared/Papers/arXiv_2024-Dec-2412-12176_SprayCraft/Images_SprayCraft/Sanjukta_Bhowmick.jpg' C:/Users/kethi/PycharmProjects/SprayCraft/docs/images/author_sanjukta.jpg)",
+      "Bash(ls *.png)"
+    ]
+  }
+}
