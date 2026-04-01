@@ -1,422 +1,775 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>SprayCraft — Graph-Based Route Optimization for Precision Spraying</title>
-  <meta name="description" content="SprayCraft: Graph-based spatial analysis and TSP route optimization for variable-rate precision drone spraying in Agriculture CPS."/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SprayCraft — Graph-Based Route Optimization for Variable Rate Precision Spraying</title>
+  <meta name="description" content="SprayCraft: An Agriculture Cyber-Physical System using graph-based spatial analysis and TSP route optimization for precision drone spraying." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    :root{
-      --green:#2e7d32;--green-mid:#388e3c;--green-light:#4caf50;--green-dark:#1b5e20;
-      --green-bg:#f1f8f1;--text:#111827;--muted:#374151;--subtle:#6b7280;
-      --border:#e5e7eb;--shadow:0 2px 12px rgba(0,0,0,.08);--radius:10px;
+    :root {
+      --green: #2d8a4e;
+      --green-light: #e8f5ee;
+      --green-dark: #1a5c34;
+      --accent: #f0a500;
+      --text: #1a1a2e;
+      --text-muted: #555;
+      --bg: #ffffff;
+      --bg-alt: #f8fafb;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);background:#fff;line-height:1.65}
-    a{color:var(--green);text-decoration:none}
-    a:hover{text-decoration:underline}
-    img{max-width:100%;height:auto;display:block}
 
-    /* NAV */
-    .topnav{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-    .topnav-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:.7rem 1.5rem}
-    .nav-brand{font-weight:800;font-size:1rem;color:var(--green-dark)}
-    .nav-links{display:flex;gap:1.25rem}
-    .nav-links a{font-size:.85rem;font-weight:500;color:var(--muted);transition:color .15s}
-    .nav-links a:hover{color:var(--green);text-decoration:none}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* HEADER */
-    header{background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 55%,#388e3c 100%);color:#fff;padding:4rem 1.5rem 3rem;text-align:center}
-    .venue-badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:.25rem 1rem;font-size:.75rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:1.25rem}
-    header h1{font-size:clamp(1.7rem,4vw,2.7rem);font-weight:800;line-height:1.2;margin-bottom:.75rem}
-    header h1 em{font-style:normal;color:#a5d6a7}
-    .hdr-authors{font-size:.88rem;opacity:.82;margin-bottom:.3rem}
-    .hdr-affil{font-size:.8rem;opacity:.6;margin-bottom:2rem}
-    .btn-row{display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
-    .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.2rem;border-radius:7px;font-size:.85rem;font-weight:600;transition:transform .15s,box-shadow .15s;text-decoration:none}
-    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25);text-decoration:none}
-    .btn-white{background:#fff;color:var(--green-dark)}
-    .btn-ghost{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.45);color:#fff}
-    .btn-ghost:hover{background:rgba(255,255,255,.2)}
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+    }
 
-    /* METRICS */
-    .metrics{background:var(--green-dark);color:#fff;padding:.9rem 1.5rem}
-    .metrics-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem;text-align:center}
-    .metric-val{font-size:1.5rem;font-weight:800;color:#a5d6a7;line-height:1}
-    .metric-lbl{font-size:.7rem;opacity:.7;margin-top:.2rem;text-transform:uppercase;letter-spacing:.05em}
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand { font-weight: 700; font-size: 1.1rem; color: var(--green-dark); text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--green); }
 
-    /* PAGE */
-    .page{max-width:960px;margin:0 auto;padding:0 1.5rem}
-    .section{padding:3rem 0}
-    .section+.section{border-top:1px solid var(--border)}
-    .sec-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
-    .sec-num{width:26px;height:26px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0}
-    .sec-header h2{font-size:1.35rem;font-weight:700}
-    .sec-sub{color:var(--muted);font-size:.93rem;max-width:700px;margin-bottom:1.75rem}
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #0f2d1f 0%, #1a5c34 50%, #2d8a4e 100%);
+      color: white;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-inner { max-width: 860px; margin: 0 auto; position: relative; }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      padding: 0.3rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .hero h1 span { color: #7be0a0; }
+    .hero-sub {
+      font-size: 1.1rem;
+      opacity: 0.85;
+      max-width: 680px;
+      margin: 0 auto 1.5rem;
+    }
+    .hero-authors {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-bottom: 2rem;
+    }
+    .hero-authors strong { opacity: 1; }
+    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .btn-white { background: white; color: var(--green-dark); }
+    .btn-outline { background: transparent; border: 2px solid rgba(255,255,255,0.6); color: white; }
+    .btn-outline:hover { border-color: white; background: rgba(255,255,255,0.1); }
 
-    /* FIGURE */
-    .fig{background:var(--green-bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin:1.25rem 0}
-    .fig img{width:100%;border-radius:6px}
-    .fig-cap{text-align:center;font-size:.78rem;color:var(--subtle);margin-top:.55rem;font-style:italic}
-    .fig-grid{display:grid;gap:1rem;margin:1.25rem 0}
-    .fig-grid.cols-2{grid-template-columns:1fr 1fr}
-    @media(max-width:600px){.fig-grid.cols-2{grid-template-columns:1fr}}
+    /* ── SECTIONS ── */
+    section { padding: 4.5rem 2rem; }
+    section:nth-child(even) { background: var(--bg-alt); }
+    .section-inner { max-width: 1000px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    .lead { font-size: 1.05rem; color: var(--text-muted); max-width: 720px; margin-bottom: 2.5rem; }
 
-    /* PIPELINE */
-    .pipeline{display:flex;flex-direction:column;gap:0;margin:1.75rem 0;position:relative}
-    .pipeline::before{content:'';position:absolute;left:12px;top:18px;bottom:18px;width:2px;background:linear-gradient(to bottom,var(--green),#a5d6a7)}
-    .pipe-step{display:flex;gap:1rem;align-items:flex-start;padding:.65rem 0}
-    .pipe-dot{width:26px;height:26px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;position:relative;z-index:1;border:2px solid #fff;box-shadow:0 0 0 2px var(--green)}
-    .pipe-body h4{font-size:.92rem;font-weight:600;margin-bottom:.15rem}
-    .pipe-body p{font-size:.85rem;color:var(--muted)}
+    /* ── PROBLEM CARDS ── */
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+    .problem-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .problem-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--green), #7be0a0);
+    }
+    .problem-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .problem-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .problem-card p { font-size: 0.9rem; color: var(--text-muted); }
 
-    /* SPRAYER GRID */
-    .sprayer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.25rem 0}
-    @media(max-width:580px){.sprayer-grid{grid-template-columns:1fr}}
-    .sprayer-card{border-radius:var(--radius);padding:1.2rem;border:2px solid var(--border)}
-    .sprayer-card.vrs{border-color:var(--green);background:#f0fdf4}
-    .sprayer-card h4{font-size:.92rem;font-weight:700;margin-bottom:.35rem}
-    .sprayer-card p{font-size:.85rem;color:var(--muted);margin-bottom:.65rem}
-    .mono{font-family:'Courier New',monospace;background:#f4f4f5;border-radius:5px;padding:.55rem .85rem;font-size:.78rem;line-height:1.75}
+    /* ── PIPELINE ── */
+    .pipeline { display: flex; gap: 0; align-items: stretch; flex-wrap: wrap; }
+    .pipe-stage {
+      flex: 1;
+      min-width: 180px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin: 0.25rem;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .pipe-num {
+      width: 32px;
+      height: 32px;
+      background: var(--green);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    .pipe-stage h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .pipe-stage p { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* CALLOUT */
-    .callout{display:flex;gap:.75rem;border-radius:var(--radius);padding:.9rem 1.1rem;margin:1.25rem 0;font-size:.88rem}
-    .callout.info{background:#eff6ff;border-left:4px solid #3b82f6;color:#1e3a5f}
-    .callout.success{background:#f0fdf4;border-left:4px solid var(--green);color:#14532d}
-    .callout-icon{font-size:1rem;flex-shrink:0;margin-top:.1rem}
+    /* ── EQUATION BLOCKS ── */
+    .eq-block {
+      background: #0f2d1f;
+      color: #7be0a0;
+      border-radius: var(--radius);
+      padding: 1.5rem 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      margin: 1.5rem 0;
+      overflow-x: auto;
+      line-height: 1.8;
+    }
+    .eq-comment { color: #4a9e6b; }
 
-    /* RESULTS */
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin:1.25rem 0}
-    .stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;text-align:center;box-shadow:var(--shadow)}
-    .stat-val{font-size:1.75rem;font-weight:800;color:var(--green);line-height:1}
-    .stat-lbl{font-size:.78rem;color:var(--subtle);margin-top:.25rem}
+    /* ── METHOD CARDS ── */
+    .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .method-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+    .method-badge {
+      display: inline-block;
+      background: var(--green-light);
+      color: var(--green-dark);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .method-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .method-card p { font-size: 0.88rem; color: var(--text-muted); }
+    .method-card ul { margin-top: 0.5rem; padding-left: 1.2rem; font-size: 0.88rem; color: var(--text-muted); }
+    .method-card ul li { margin-bottom: 0.25rem; }
 
-    /* CODE */
-    .codeblock{background:#1e1e2e;color:#cdd6f4;border-radius:var(--radius);padding:1.35rem;font-family:'Courier New',monospace;font-size:.83rem;line-height:1.8;overflow-x:auto;margin:1.1rem 0}
-    .codeblock .c{color:#6c7086}.codeblock .n{color:#fab387}.codeblock .s{color:#a6e3a1}.codeblock .v{color:#89b4fa}
+    /* ── RESULTS ── */
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .result-stat {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .result-stat .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--green);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .result-stat .stat-label { font-size: 0.85rem; color: var(--text-muted); }
 
-    /* AUTHORS */
-    .authors-grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin:1.25rem 0}
-    .author-card{display:flex;flex-direction:column;align-items:center;text-align:center;background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem .9rem;min-width:130px;max-width:155px;flex:1;box-shadow:var(--shadow)}
-    .author-avatar{width:64px;height:64px;border-radius:50%;object-fit:cover;border:3px solid var(--green-light);margin-bottom:.5rem;background:var(--green-bg)}
-    .author-init{width:64px;height:64px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;margin-bottom:.5rem;border:3px solid var(--green-light)}
-    .author-name{font-size:.82rem;font-weight:600;margin-bottom:.15rem}
-    .author-inst{font-size:.72rem;color:var(--subtle)}
+    /* ── COMPARISON TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    th {
+      background: var(--green-dark);
+      color: white;
+      padding: 0.85rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+    td { padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: var(--bg-alt); }
+    .badge-yes { color: #1a7f45; font-weight: 600; }
+    .badge-partial { color: #b45309; font-weight: 600; }
+    .badge-no { color: #dc2626; font-weight: 600; }
 
-    /* CITATION */
-    .bib{background:var(--green-bg);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:var(--radius);padding:1.1rem 1.4rem;font-family:'Courier New',monospace;font-size:.8rem;line-height:1.9;overflow-x:auto;position:relative}
-    .copy-btn{position:absolute;top:.7rem;right:.7rem;background:var(--green);color:#fff;border:none;border-radius:6px;padding:.25rem .65rem;font-size:.73rem;font-weight:600;cursor:pointer}
-    .copy-btn:hover{background:var(--green-dark)}
+    /* ── SPRAYER COMPARISON ── */
+    .sprayer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 640px) { .sprayer-grid { grid-template-columns: 1fr; } }
+    .sprayer-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+    .sprayer-card.vrs { border-color: var(--green); }
+    .sprayer-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .sprayer-card h3 span { color: var(--green); }
+    .sprayer-card p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .code-snippet {
+      background: #f4f4f5;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #1a1a2e;
+    }
 
-    /* FOOTER */
-    footer{background:var(--green-dark);color:rgba(255,255,255,.7);text-align:center;padding:2rem 1.5rem;font-size:.83rem}
-    footer strong{color:#fff}
-    footer a{color:#a5d6a7}
-    footer p+p{margin-top:.4rem}
+    /* ── CODE ── */
+    .install-block {
+      background: #1a1a2e;
+      color: #e2e8f0;
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 1.9;
+      overflow-x: auto;
+    }
+    .install-block .cmd { color: #7be0a0; }
+    .install-block .comment { color: #64748b; }
+    .install-block .param { color: #f0a500; }
+    .install-block .val { color: #60a5fa; }
 
-    @media(max-width:680px){.topnav-inner{gap:.5rem}header h1{font-size:1.55rem}}
+    /* ── CITATION ── */
+    .citation-block {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--green);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      overflow-x: auto;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: var(--green);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: var(--green-dark); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #0f2d1f;
+      color: rgba(255,255,255,0.65);
+      text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: 0.88rem;
+    }
+    footer a { color: #7be0a0; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    footer strong { color: white; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
   </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav class="topnav">
-  <div class="topnav-inner">
-    <span class="nav-brand">🌿 SprayCraft</span>
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-brand">SprayCraft</a>
     <div class="nav-links">
-      <a href="#overview">Overview</a>
-      <a href="#method">Method</a>
-      <a href="#sprayer">Sprayer</a>
+      <a href="#problem">Problem</a>
+      <a href="#approach">Approach</a>
       <a href="#results">Results</a>
       <a href="#code">Code</a>
-      <a href="#cite">Cite</a>
+      <a href="#citation">Citation</a>
     </div>
   </div>
 </nav>
 
-<!-- HEADER -->
-<header>
-  <div class="venue-badge">arXiv 2412.12176 &nbsp;·&nbsp; December 2024</div>
-  <h1><em>SprayCraft:</em> Graph-Based Route Optimization<br/>for Variable Rate Precision Spraying</h1>
-  <p class="hdr-authors">Kiran K. Kethineni &nbsp;·&nbsp; Saraju P. Mohanty &nbsp;·&nbsp; Elias Kougianos &nbsp;·&nbsp; Sanjukta Bhowmick &nbsp;·&nbsp; Laavanya Rachakonda</p>
-  <p class="hdr-affil">University of North Texas &nbsp;·&nbsp; University of North Carolina Wilmington</p>
-  <div class="btn-row">
-    <a href="https://arxiv.org/abs/2412.12176" class="btn btn-white" target="_blank">📄 Paper</a>
-    <a href="https://github.com/kirankkethineni/SprayCraft" class="btn btn-ghost" target="_blank">💻 GitHub</a>
-    <a href="https://github.com/kirankkethineni/SprayCraft/blob/main/SprayCraft.ipynb" class="btn btn-ghost" target="_blank">📓 Notebook</a>
-    <a href="#cite" class="btn btn-ghost">🔖 Cite</a>
-  </div>
-</header>
-
-<!-- METRICS -->
-<div class="metrics">
-  <div class="metrics-inner">
-    <div><div class="metric-val">36</div><div class="metric-lbl">Disease Locations</div></div>
-    <div><div class="metric-val">1,056 m</div><div class="metric-lbl">TSP Tour Cost</div></div>
-    <div><div class="metric-val">3,255 m</div><div class="metric-lbl">Coverage Path</div></div>
-    <div><div class="metric-val">1.5×</div><div class="metric-lbl">TSP Guarantee</div></div>
-    <div><div class="metric-val">2</div><div class="metric-lbl">Sprayer Types</div></div>
-    <div><div class="metric-val">GPS</div><div class="metric-lbl">Ready Output</div></div>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">Agriculture Cyber-Physical Systems &middot; arXiv 2412.12176</div>
+    <h1>SprayCraft: <span>Graph-Based Route Optimization</span><br/>for Variable Rate Precision Spraying</h1>
+    <p class="hero-sub">
+      An A-CPS framework that models disease spread as spatial graphs, detects infection hotspots
+      via message passing, and computes near-optimal drone spray routes using TSP formulation.
+    </p>
+    <p class="hero-authors">
+      <strong>Kiran K. Kethineni</strong>, Saraju P. Mohanty, Elias Kougianos, Sanjukta Bhowmick, Laavanya Rachakonda<br/>
+      University of North Texas &nbsp;&middot;&nbsp; University of North Carolina Wilmington
+    </p>
+    <div class="btn-group">
+      <a href="https://arxiv.org/abs/2412.12176" class="btn btn-white" target="_blank">
+        📄 Read Paper
+      </a>
+      <a href="https://github.com/kirankkethineni/SprayCraft" class="btn btn-outline" target="_blank">
+        💻 View Code
+      </a>
+      <a href="https://github.com/kirankkethineni/SprayCraft/blob/main/SprayCraft.ipynb" class="btn btn-outline" target="_blank">
+        📓 Notebook
+      </a>
+    </div>
   </div>
 </div>
 
-<div class="page">
-
-<!-- 1. OVERVIEW -->
-<section class="section" id="overview">
-  <div class="sec-header"><span class="sec-num">1</span><h2>System Overview</h2></div>
-  <p class="sec-sub">
-    SprayCraft is an Agriculture Cyber-Physical System (A-CPS) that models disease spread as spatial graphs,
-    detects infection hotspots via message passing, and computes near-optimal drone spray routes using TSP —
-    producing GPS-ready waypoints with variable pesticide dosage per location.
-  </p>
-
-  <div class="fig">
-    <img src="images/overview.png" alt="SprayCraft System Overview"/>
-    <p class="fig-cap">Fig. 1 — End-to-end system: image acquisition → spatial analysis → hotspot detection → path computation → drone deployment.</p>
-  </div>
-
-  <div class="fig">
-    <img src="images/block_diagram.png" alt="SprayCraft Method Block Diagram"/>
-    <p class="fig-cap">Fig. 2 — Method block diagram: Diseased Locations → Spatial Analysis → Hotspot Detection → Intensity Calculation → Path Computation.</p>
-  </div>
-</section>
-
-<!-- 2. METHOD -->
-<section class="section" id="method">
-  <div class="sec-header"><span class="sec-num">2</span><h2>Method</h2></div>
-  <p class="sec-sub">A two-stage pipeline — spatial graph analysis for hotspot scoring, then TSP + boustrophedon path generation for drone routing.</p>
-
-  <div class="pipeline">
-    <div class="pipe-step">
-      <div class="pipe-dot">1</div>
-      <div class="pipe-body">
-        <h4>Graph Construction</h4>
-        <p>Each diseased instance → node (feature = diseased area). Edges connect nodes within pathogen dispersal radius, weighted by inverse distance.</p>
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-inner">
+    <div class="section-label">The Problem</div>
+    <h2>Precision Agriculture Needs Smarter Spraying</h2>
+    <p class="lead">
+      Plant diseases cause up to <strong>20% of global produce loss</strong>. Yet conventional uniform pesticide
+      spraying wastes resources, damages ecosystems, and promotes crop resistance — because disease is never uniform.
+    </p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-icon">🗺️</div>
+        <h3>Spatial Heterogeneity</h3>
+        <p>Disease severity clusters spatially — hotspots near infection sources are far more dangerous than peripheral instances. Uniform treatment ignores this entirely.</p>
       </div>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-dot">2</div>
-      <div class="pipe-body">
-        <h4>Message Passing — Hotspot Detection</h4>
-        <p>h<sub>u</sub><sup>(k+1)</sup> = UPDATE(h<sub>u</sub><sup>(k)</sup>, AGG({h<sub>v</sub><sup>(k)</sup> · 1/W(u,v) : v ∈ N(u)})). Nodes with highest aggregated features = primary hotspots.</p>
+      <div class="problem-card">
+        <div class="problem-icon">💧</div>
+        <h3>Dosage Must Vary</h3>
+        <p>High-probability infection hotspots need more pesticide. Low-risk areas need less. No existing system computes this from spatial data automatically.</p>
       </div>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-dot">3</div>
-      <div class="pipe-body">
-        <h4>Hotspot Scoring</h4>
-        <p>Normalize node features → hotspot probability p<sub>u</sub> ∈ [0,1]. Drives spray dosage at each location.</p>
+      <div class="problem-card">
+        <div class="problem-icon">🚁</div>
+        <h3>Drone Routing is Hard</h3>
+        <p>A spraying drone must visit all diseased locations efficiently. This is the Traveling Salesman Problem — NP-hard and critical for reducing battery and time cost.</p>
       </div>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-dot">4</div>
-      <div class="pipe-body">
-        <h4>TSP Route (Christofides)</h4>
-        <p>MST + minimum-weight matching on odd-degree nodes → Eulerian → Hamiltonian circuit. Provably within 1.5× of optimal.</p>
+      <div class="problem-card">
+        <div class="problem-icon">⚙️</div>
+        <h3>Diverse Hardware</h3>
+        <p>Agricultural drones range from fixed flow-rate sprayers to variable-rate (PWM/PID) systems. Solutions must adapt to both without hardware-specific redesign.</p>
       </div>
-    </div>
-    <div class="pipe-step">
-      <div class="pipe-dot">5</div>
-      <div class="pipe-body">
-        <h4>Boustrophedon Coverage Path</h4>
-        <p>Serpentine parallel sweeps at each diseased location. Path spacing = 2× spray radius (derived from hotspot score). 100% coverage guaranteed.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Flowcharts -->
-  <div class="fig-grid cols-2">
-    <div class="fig">
-      <img src="images/hotspot_flow.png" alt="Hotspot Detection Flowchart"/>
-      <p class="fig-cap">Hotspot detection algorithm: data loading → graph build → message passing → normalization → scoring.</p>
-    </div>
-    <div class="fig">
-      <img src="images/path_flow.png" alt="Path Computation Flowchart"/>
-      <p class="fig-cap">Path computation flowchart: variable rate vs. constant rate sprayer decision logic.</p>
-    </div>
-  </div>
-
-  <!-- Message passing + boustrophedon -->
-  <div class="fig-grid cols-2">
-    <div class="fig">
-      <img src="images/message_passing.png" alt="Message Passing"/>
-      <p class="fig-cap">Message passing: each node aggregates infection signals from neighbors across iterations k → k+1.</p>
-    </div>
-    <div class="fig">
-      <img src="images/boustrophedon.png" alt="Boustrophedon Path"/>
-      <p class="fig-cap">Boustrophedon (serpentine) coverage path — alternating horizontal passes, spacing = 2× spray radius.</p>
     </div>
   </div>
 </section>
 
-<!-- 3. SPRAYER ADAPTATION -->
-<section class="section" id="sprayer">
-  <div class="sec-header"><span class="sec-num">3</span><h2>Sprayer Adaptation</h2></div>
-  <p class="sec-sub">SprayCraft supports both variable-rate and constant-rate spraying systems. A single parameter switch adapts the same pipeline to either hardware.</p>
+<!-- APPROACH -->
+<section id="approach">
+  <div class="section-inner">
+    <div class="section-label">The Solution</div>
+    <h2>A Unified Two-Stage Framework</h2>
+    <p class="lead">
+      SprayCraft unifies hotspot detection and route optimization in a single graph-theoretic pipeline —
+      from raw disease location data to GPS-ready drone waypoints.
+    </p>
 
-  <div class="fig">
-    <img src="images/nozzle.png" alt="Nozzle Height Area Geometry"/>
-    <p class="fig-cap">Conical spray pattern geometry: effective coverage area = π·R², adjusted by flight altitude. Lower altitude → denser spray over hotspots.</p>
-  </div>
-
-  <div class="sprayer-grid">
-    <div class="sprayer-card vrs">
-      <h4>✅ Variable Rate Sprayer (VRS_BuiltIn = True)</h4>
-      <p>PWM/PID flow control. Hotspot probability directly modulates spray dosage in real time. Altitude stays constant.</p>
-      <div class="mono">
-        spray_radius = 2 − 1 × hotspot_prob<br/>
-        flow_rate ∝ hotspot_probability<br/>
-        altitude = constant
+    <div class="pipeline">
+      <div class="pipe-stage">
+        <div class="pipe-num">1</div>
+        <h3>Graph Construction</h3>
+        <p>Each diseased instance becomes a node. Edges connect nodes within pathogen dispersal radius, weighted by inverse distance.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">2</div>
+        <h3>Message Passing</h3>
+        <p>Iterative neighbor aggregation updates each node's feature, surfacing hotspots as nodes with the highest aggregated infection area.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">3</div>
+        <h3>Hotspot Scoring</h3>
+        <p>Normalized node features become hotspot probability scores — directly driving variable spray dosages.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">4</div>
+        <h3>TSP Route</h3>
+        <p>Christofides algorithm computes a near-optimal Hamiltonian circuit visiting all diseased locations (1.5× approximation guarantee).</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">5</div>
+        <h3>Coverage Paths</h3>
+        <p>Boustrophedon serpentine paths at each location ensure 100% coverage. Spacing adapts to spray radius derived from hotspot score.</p>
+      </div>
+      <div class="pipe-stage">
+        <div class="pipe-num">6</div>
+        <h3>GPS Waypoints</h3>
+        <p>Meter-based coordinates convert to GPS lat/long via Haversine formula, producing drone-ready flight plans.</p>
       </div>
     </div>
-    <div class="sprayer-card">
-      <h4>⚙️ Constant Rate Sprayer (VRS_BuiltIn = False)</h4>
-      <p>Fixed flow rate. Effective spray area controlled by adjusting flight altitude at each diseased location.</p>
-      <div class="mono">
-        Area = π × R²<br/>
-        altitude ↓ → R ↓ → denser spray<br/>
-        altitude ↑ → R ↑ → wider spray
+
+    <h3 style="margin: 2.5rem 0 1rem; font-size: 1.2rem;">Message Passing (Stage 1)</h3>
+    <div class="eq-block">
+<span class="eq-comment"># Graph: G = (V, E, F) where F = node feature = diseased area</span>
+<span class="eq-comment"># Edge weight W(u,v) = distance between nodes u and v</span>
+
+h_u<sup>(k+1)</sup> = UPDATE(  h_u<sup>(k)</sup>,  AGG( { h_v<sup>(k)</sup> · 1/W(u,v) : v ∈ N(u) } )  )
+
+<span class="eq-comment"># After k iterations: higher h_u → higher hotspot probability</span>
+<span class="eq-comment"># Normalize: p_u = h_u / max(h)</span>
+    </div>
+
+    <h3 style="margin: 2rem 0 1rem; font-size: 1.2rem;">Sprayer Adaptation (Stage 2)</h3>
+    <div class="sprayer-grid">
+      <div class="sprayer-card vrs">
+        <h3>Variable Rate Sprayer <span>(VRS_BuiltIn = True)</span></h3>
+        <p>PWM/PID-controlled flow rate. Dosage is modulated directly by hotspot probability score.</p>
+        <div class="code-snippet">
+          spray_radius = 2 - 1 × hotspot_probability<br/>
+          flow_rate ∝ hotspot_probability<br/>
+          altitude = constant
+        </div>
+      </div>
+      <div class="sprayer-card">
+        <h3>Constant Rate Sprayer <span>(VRS_BuiltIn = False)</span></h3>
+        <p>Fixed flow rate. Effective area controlled by adjusting flight altitude (conical spray geometry).</p>
+        <div class="code-snippet">
+          Area = π × R²<br/>
+          R = f(altitude, cone_angle)<br/>
+          altitude = g(hotspot_probability)
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin: 2.5rem 0 1rem; font-size: 1.2rem;">Technical Highlights</h3>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-badge">Graph Theory</div>
+        <h3>Spatial Graph Representation</h3>
+        <p>Disease instances map to graph nodes with edges encoding pathogen dispersal proximity and weighted by inverse distance.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">GNN</div>
+        <h3>Graph Message Passing</h3>
+        <p>Neighbors share infection signals iteratively. Multi-hop aggregation captures cluster effects that single-node analysis misses.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Optimization</div>
+        <h3>Christofides TSP</h3>
+        <p>MST + minimum-weight perfect matching on odd-degree nodes → Eulerian circuit → Hamiltonian circuit. Provably within 1.5× of optimal.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Coverage</div>
+        <h3>Boustrophedon Paths</h3>
+        <p>Parallel serpentine sweeps with spacing equal to 2× spray radius. Guarantees 100% area coverage with zero overlaps or gaps.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Hardware</div>
+        <h3>Dual Sprayer Support</h3>
+        <p>A single parameter switch (VRS_BuiltIn) enables the same pipeline to drive both variable-rate and constant-rate drone sprayers.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Navigation</div>
+        <h3>GPS Coordinate Conversion</h3>
+        <p>Haversine formula converts pixel/meter waypoints to GPS lat/long coordinates, making output directly consumable by commercial drones.</p>
       </div>
     </div>
   </div>
+</section>
 
-  <div class="callout success">
-    <span class="callout-icon">🌱</span>
-    <div>Both modes concentrate pesticide on hotspot clusters and reduce dosage in low-risk areas — cutting waste while protecting the highest-risk zones.</div>
+<!-- RESULTS -->
+<section id="results">
+  <div class="section-inner">
+    <div class="section-label">Results</div>
+    <h2>Validated on Synthetic Farmland Data</h2>
+    <p class="lead">
+      Evaluated on 36 diseased locations across a 250×250 m synthetic farmland using apple leaf disease
+      annotations (Black Rot, Cedar Apple Rust, Apple Scab).
+    </p>
+
+    <div class="results-grid">
+      <div class="result-stat">
+        <div class="stat-value">36</div>
+        <div class="stat-label">Diseased Locations Modeled</div>
+      </div>
+      <div class="result-stat">
+        <div class="stat-value">1,056 m</div>
+        <div class="stat-label">Optimal TSP Tour Length</div>
+      </div>
+      <div class="result-stat">
+        <div class="stat-value">3,255 m</div>
+        <div class="stat-label">Total Coverage Path Length</div>
+      </div>
+      <div class="result-stat">
+        <div class="stat-value">1.5×</div>
+        <div class="stat-label">TSP Approximation Guarantee</div>
+      </div>
+      <div class="result-stat">
+        <div class="stat-value">3–4.8 m</div>
+        <div class="stat-label">Adaptive Flight Altitude Range</div>
+      </div>
+      <div class="result-stat">
+        <div class="stat-value">1–2 m</div>
+        <div class="stat-label">Variable Spray Radius Range</div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Key Findings</h3>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-badge">Hotspot Detection</div>
+        <h3>Nodes 14 &amp; 15 Flagged as Primary Hotspots</h3>
+        <p>After two rounds of message passing, nodes 14 and 15 accumulated the highest aggregated features, correctly identifying the densest disease clusters as high-risk zones.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Variable Rate</div>
+        <h3>Adaptive Dosage Allocation</h3>
+        <p>Variable-rate mode concentrates pesticide in hotspot zones while reducing dosage at peripheral locations — cutting waste while protecting the most vulnerable areas.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Route Efficiency</div>
+        <h3>Near-Optimal Tour in Polynomial Time</h3>
+        <p>Christofides algorithm produced a 1,056.13 m tour through 36 locations. Sequence: [0→1→4→10→8→14→15→16→18→...→0], efficiently clustering spatially adjacent nodes.</p>
+      </div>
+    </div>
+
+    <h3 style="margin: 2.5rem 0 1rem; font-size: 1.1rem;">Comparison with Related Work</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Approach</th>
+            <th>Spatial Analysis</th>
+            <th>Hotspot Detection</th>
+            <th>Variable Rate</th>
+            <th>Route Optimization</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Traditional Uniform Spraying</td>
+            <td class="badge-no">✗ None</td>
+            <td class="badge-no">✗ None</td>
+            <td class="badge-no">✗ Fixed</td>
+            <td class="badge-no">✗ None</td>
+          </tr>
+          <tr>
+            <td>Grid-based Coverage</td>
+            <td class="badge-partial">⚬ Grid only</td>
+            <td class="badge-no">✗ None</td>
+            <td class="badge-no">✗ Fixed</td>
+            <td class="badge-partial">⚬ Boustrophedon</td>
+          </tr>
+          <tr>
+            <td>ML Disease Severity (no routing)</td>
+            <td class="badge-partial">⚬ Local only</td>
+            <td class="badge-partial">⚬ Per-image</td>
+            <td class="badge-partial">⚬ Limited</td>
+            <td class="badge-no">✗ None</td>
+          </tr>
+          <tr>
+            <td><strong>SprayCraft (Ours)</strong></td>
+            <td class="badge-yes">✓ Graph spatial</td>
+            <td class="badge-yes">✓ Message passing</td>
+            <td class="badge-yes">✓ Probabilistic</td>
+            <td class="badge-yes">✓ TSP + Boustrophedon</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 
-<!-- 4. RESULTS -->
-<section class="section" id="results">
-  <div class="sec-header"><span class="sec-num">4</span><h2>Results</h2></div>
-  <p class="sec-sub">Evaluated on a synthetic 250×250 m farmland with 36 diseased apple leaf instances (Black Rot, Cedar Apple Rust, Apple Scab).</p>
+<!-- CODE -->
+<section id="code">
+  <div class="section-inner">
+    <div class="section-label">Code</div>
+    <h2>Get Started in Minutes</h2>
+    <p class="lead">The complete implementation is available as a Jupyter notebook.</p>
 
-  <div class="stats">
-    <div class="stat-card"><div class="stat-val">1,056 m</div><div class="stat-lbl">TSP tour cost</div></div>
-    <div class="stat-card"><div class="stat-val">3,255 m</div><div class="stat-lbl">Total coverage path</div></div>
-    <div class="stat-card"><div class="stat-val">14 &amp; 15</div><div class="stat-lbl">Primary hotspot nodes</div></div>
-    <div class="stat-card"><div class="stat-val">3–4.8 m</div><div class="stat-lbl">Altitude range (const.)</div></div>
-  </div>
+    <div class="install-block">
+<span class="comment"># 1. Clone the repository</span>
+<span class="cmd">git clone https://github.com/kirankkethineni/SprayCraft.git</span>
+<span class="cmd">cd SprayCraft</span>
 
-  <div class="fig-grid cols-2">
-    <div class="fig">
-      <img src="images/hotspots_id2.png" alt="Hotspots Identified"/>
-      <p class="fig-cap">Hotspot probability map after message passing — nodes 14 &amp; 15 identified as primary hotspots (darkest red).</p>
-    </div>
-    <div class="fig">
-      <img src="images/tour1.png" alt="Computed TSP Tour"/>
-      <p class="fig-cap">Near-optimal TSP tour across 36 locations — total cost 1,056.13 m, computed via Christofides algorithm.</p>
-    </div>
-  </div>
+<span class="comment"># 2. Install dependencies</span>
+<span class="cmd">pip install pandas matplotlib networkx numpy tensorflow jupyter</span>
 
-  <div class="fig-grid cols-2">
-    <div class="fig">
-      <img src="images/drone_path3.png" alt="3D Drone Flight Altitude Map"/>
-      <p class="fig-cap">3D flight altitude map (constant rate sprayer) — altitude varies 3.0–4.8 m; lower over hotspots for denser coverage.</p>
-    </div>
-    <div class="fig">
-      <img src="images/heat_vrs1.png" alt="VRS Spray Heat Map"/>
-      <p class="fig-cap">Spray intensity heat map (variable rate sprayer) — darker regions = higher pesticide concentration at hotspot clusters.</p>
-    </div>
-  </div>
-</section>
+<span class="comment"># 3. Launch notebook</span>
+<span class="cmd">jupyter notebook SprayCraft.ipynb</span>
 
-<!-- 5. CODE -->
-<section class="section" id="code">
-  <div class="sec-header"><span class="sec-num">5</span><h2>Code</h2></div>
-  <p class="sec-sub">Complete implementation as a single Jupyter notebook.</p>
-  <div class="codeblock">
-<span class="c"># Clone and run</span>
-<span class="v">git</span> clone https://github.com/kirankkethineni/SprayCraft.git &amp;&amp; cd SprayCraft
-<span class="v">pip</span> install pandas matplotlib networkx numpy tensorflow jupyter
-<span class="v">jupyter</span> notebook SprayCraft.ipynb
+<span class="comment"># 4. Key parameters to configure</span>
+<span class="param">intensity_factor</span> = <span class="val">4</span>       <span class="comment"># Spray intensity scaling</span>
+<span class="param">crop_height</span>      = <span class="val">1</span>       <span class="comment"># Crop height in meters</span>
+<span class="param">delta_altitude</span>   = <span class="val">4</span>       <span class="comment"># Base flight altitude above crop</span>
+<span class="param">VRS_BuiltIn</span>      = <span class="val">True</span>    <span class="comment"># True=variable rate | False=constant rate</span>
+    </div>
 
-<span class="c"># Key parameters</span>
-<span class="n">intensity_factor</span> = <span class="s">4</span>       <span class="c"># spray intensity scaling</span>
-<span class="n">crop_height</span>      = <span class="s">1</span>       <span class="c"># crop height in meters</span>
-<span class="n">delta_altitude</span>   = <span class="s">4</span>       <span class="c"># base flight altitude above crop</span>
-<span class="n">VRS_BuiltIn</span>      = <span class="s">True</span>    <span class="c"># True = variable rate | False = constant rate</span>
-  </div>
-</section>
-
-<!-- 6. AUTHORS -->
-<section class="section" id="authors">
-  <div class="sec-header"><span class="sec-num">6</span><h2>Authors</h2></div>
-  <div class="authors-grid">
-    <div class="author-card">
-      <img src="images/author_kiran.jpg" alt="Kiran K. Kethineni" class="author-avatar"/>
-      <div class="author-name">Kiran K. Kethineni</div>
-      <div class="author-inst">Univ. of North Texas</div>
-    </div>
-    <div class="author-card">
-      <div class="author-init">SM</div>
-      <div class="author-name">Saraju P. Mohanty</div>
-      <div class="author-inst">Univ. of North Texas</div>
-    </div>
-    <div class="author-card">
-      <img src="images/author_elias.jpg" alt="Elias Kougianos" class="author-avatar"/>
-      <div class="author-name">Elias Kougianos</div>
-      <div class="author-inst">Univ. of North Texas</div>
-    </div>
-    <div class="author-card">
-      <img src="images/author_sanjukta.jpg" alt="Sanjukta Bhowmick" class="author-avatar"/>
-      <div class="author-name">Sanjukta Bhowmick</div>
-      <div class="author-inst">Univ. of North Texas</div>
-    </div>
-    <div class="author-card">
-      <div class="author-init">LR</div>
-      <div class="author-name">Laavanya Rachakonda</div>
-      <div class="author-inst">UNC Wilmington</div>
+    <h3 style="margin: 2rem 0 1rem; font-size: 1.1rem;">Notebook Structure</h3>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-badge">Section 1</div>
+        <h3>Data Loading</h3>
+        <p>Load annotated apple leaf disease dataset. Parse bounding boxes and disease class labels (Black Rot, Cedar Apple Rust, Apple Scab).</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Section 2</div>
+        <h3>Graph Construction</h3>
+        <p>Build spatial graph from disease instance coordinates. Set node features = diseased area. Connect nodes within dispersal radius threshold.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Section 3</div>
+        <h3>Message Passing</h3>
+        <p>Apply iterative neighbor aggregation. Visualize node feature evolution across iterations. Compute and normalize hotspot probability scores.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Section 4</div>
+        <h3>Route Optimization</h3>
+        <p>Compute MST and apply Christofides algorithm. Output near-optimal TSP tour with total distance and ordered node sequence.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Section 5</div>
+        <h3>Path Generation</h3>
+        <p>Generate boustrophedon coverage paths per location. Adapt spacing and altitude to hotspot scores. Render 3D flight altitude maps.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-badge">Section 6</div>
+        <h3>GPS Output</h3>
+        <p>Convert meter-based waypoints to GPS coordinates using Haversine formula. Produce drone-ready flight plan with lat/long waypoints.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- 7. CITATION -->
-<section class="section" id="cite">
-  <div class="sec-header"><span class="sec-num">7</span><h2>Citation</h2></div>
-  <p class="sec-sub">If SprayCraft contributes to your research, please cite:</p>
-  <div class="bib">
-    <button class="copy-btn" onclick="copyBib()">Copy</button>
+<!-- CITATION -->
+<section id="citation">
+  <div class="section-inner">
+    <div class="section-label">Citation</div>
+    <h2>Cite SprayCraft</h2>
+    <p class="lead">If SprayCraft contributes to your research, please cite our paper.</p>
+    <div class="citation-block" id="bibtex">
+      <button class="copy-btn" onclick="copyBibtex()">Copy</button>
 @article{kethineni2024spraycraft,<br/>
-&nbsp;&nbsp;title&nbsp;&nbsp;&nbsp;= {SprayCraft: Graph-Based Route Optimization for Variable Rate Precision Spraying},<br/>
-&nbsp;&nbsp;author&nbsp;&nbsp;= {Kethineni, Kiran K. and Mohanty, Saraju P. and Kougianos, Elias and<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bhowmick, Sanjukta and Rachakonda, Laavanya},<br/>
-&nbsp;&nbsp;journal = {arXiv preprint arXiv:2412.12176},<br/>
-&nbsp;&nbsp;year&nbsp;&nbsp;&nbsp;&nbsp;= {2024},<br/>
-&nbsp;&nbsp;url&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= {https://arxiv.org/abs/2412.12176}<br/>
+&nbsp;&nbsp;title&nbsp;&nbsp;&nbsp;&nbsp; = {SprayCraft: Graph-Based Route Optimization for Variable Rate Precision Spraying},<br/>
+&nbsp;&nbsp;author&nbsp;&nbsp;&nbsp; = {Kethineni, Kiran K. and Mohanty, Saraju P. and Kougianos, Elias and<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bhowmick, Sanjukta and Rachakonda, Laavanya},<br/>
+&nbsp;&nbsp;journal&nbsp;&nbsp; = {arXiv preprint arXiv:2412.12176},<br/>
+&nbsp;&nbsp;year&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = {2024},<br/>
+&nbsp;&nbsp;url&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = {https://arxiv.org/abs/2412.12176}<br/>
 }
+    </div>
   </div>
 </section>
-
-</div>
 
 <!-- FOOTER -->
 <footer>
-  <p><strong>SprayCraft</strong> — Graph-Based Route Optimization for Variable Rate Precision Spraying</p>
-  <p>Kethineni · Mohanty · Kougianos · Bhowmick · Rachakonda &nbsp;|&nbsp; University of North Texas</p>
-  <p style="margin-top:.65rem">
-    <a href="https://arxiv.org/abs/2412.12176">arXiv Paper</a> &nbsp;·&nbsp;
-    <a href="https://github.com/kirankkethineni/SprayCraft">GitHub</a> &nbsp;·&nbsp;
-    <a href="https://github.com/kirankkethineni/SprayCraft/blob/main/SprayCraft.ipynb">Notebook</a>
+  <p style="margin-bottom: 0.5rem;">
+    <strong>SprayCraft</strong> — Graph-Based Route Optimization for Variable Rate Precision Spraying
+  </p>
+  <p style="margin-bottom: 1rem;">
+    Kiran K. Kethineni &middot; Saraju P. Mohanty &middot; Elias Kougianos &middot; Sanjukta Bhowmick &middot; Laavanya Rachakonda
+  </p>
+  <p>
+    <a href="https://arxiv.org/abs/2412.12176">arXiv Paper</a> &nbsp;&middot;&nbsp;
+    <a href="https://github.com/kirankkethineni/SprayCraft">GitHub Repository</a> &nbsp;&middot;&nbsp;
+    <a href="https://github.com/kirankkethineni/SprayCraft/blob/main/SprayCraft.ipynb">Jupyter Notebook</a>
   </p>
 </footer>
 
 <script>
-  document.querySelectorAll('a[href^="#"]').forEach(a=>{
-    a.addEventListener('click',e=>{
-      e.preventDefault();
-      const t=document.querySelector(a.getAttribute('href'));
-      if(t) t.scrollIntoView({behavior:'smooth'});
-    });
-  });
-  function copyBib(){
-    const text=`@article{kethineni2024spraycraft,\n  title   = {SprayCraft: Graph-Based Route Optimization for Variable Rate Precision Spraying},\n  author  = {Kethineni, Kiran K. and Mohanty, Saraju P. and Kougianos, Elias and Bhowmick, Sanjukta and Rachakonda, Laavanya},\n  journal = {arXiv preprint arXiv:2412.12176},\n  year    = {2024},\n  url     = {https://arxiv.org/abs/2412.12176}\n}`;
-    navigator.clipboard.writeText(text).then(()=>{
-      const b=document.querySelector('.copy-btn');
-      b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',2000);
+  function copyBibtex() {
+    const text = `@article{kethineni2024spraycraft,
+  title   = {SprayCraft: Graph-Based Route Optimization for Variable Rate Precision Spraying},
+  author  = {Kethineni, Kiran K. and Mohanty, Saraju P. and Kougianos, Elias and Bhowmick, Sanjukta and Rachakonda, Laavanya},
+  journal = {arXiv preprint arXiv:2412.12176},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2412.12176}
+}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
     });
   }
+
+  // Smooth scroll for nav links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
 </script>
+
 </body>
 </html>
